@@ -19,9 +19,9 @@ class TestHSIC(unittest.TestCase):
         X3 = np.array([-0.04229407,  0.33559807, -0.24695701, -0.15193704, -0.13076795, -0.6931439 ,  0.21908194,  0.26909248,  0.21182721, -0.02992354]).reshape(-1, 1)
         Y3 = np.array([6.67830711,  2.7222485 ,  4.51723399,  3.94678569, -1.06820258, 0.6540868 ,  6.79006549,  1.39713812, -2.99670966,  2.43742226]).reshape(-1, 1)
 
-        testStat1, thresh1 = hsic_gam(X1, Y1)
-        testStat2, thresh2 = hsic_gam(X2, Y2)
-        testStat3, thresh3 = hsic_gam(X3, Y3)
+        testStat1, thresh1, _ = hsic_gam(X1, Y1)
+        testStat2, thresh2, _ = hsic_gam(X2, Y2)
+        testStat3, thresh3, _ = hsic_gam(X3, Y3)
 
         res1 = testStat1 < thresh1
         res2 = testStat2 < thresh2
@@ -43,9 +43,9 @@ class TestHSIC(unittest.TestCase):
         X3 = np.array([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]).reshape(-1, 1)
         Y3 = np.array([4, 16, 36, 64, 100, 144, 196, 256, 324, 400]).reshape(-1, 1)
 
-        testStat1, thresh1 = hsic_gam(X1, Y1)
-        testStat2, thresh2 = hsic_gam(X2, Y2)
-        testStat3, thresh3 = hsic_gam(X3, Y3)
+        testStat1, thresh1, _ = hsic_gam(X1, Y1)
+        testStat2, thresh2, _ = hsic_gam(X2, Y2)
+        testStat3, thresh3, _ = hsic_gam(X3, Y3)
 
         res1 = testStat1 > thresh1
         res2 = testStat2 > thresh2

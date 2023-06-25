@@ -1,6 +1,6 @@
 import numpy as np
 import unittest
-from ican import identify_confounders
+from ican import causal_inference
 
 # These tests run very long (20-60 min each)
 class TestICAN(unittest.TestCase):
@@ -25,7 +25,7 @@ class TestICAN(unittest.TestCase):
         X = T * np.log(T) + Nx
         Y = np.square(T) + Ny
 
-        _, _, _, _, result = identify_confounders(X.reshape(-1,1), Y.reshape(-1,1))
+        _, _, result, _ = causal_inference(X.reshape(-1,1), Y.reshape(-1,1))
         self.assertEqual(True, result)
 
     def test_no_CAN(self):
@@ -43,11 +43,11 @@ class TestICAN(unittest.TestCase):
 
         T = np.linspace(0.1, 1, n).reshape(-1,1)
         Nx = 0.1 * T
-        Ny = 0.04 * T
+        Ny = 0.4 * T
         X = T * np.log(T) + Nx
         Y = np.square(T) + Ny
 
-        _, _, _, _, result = identify_confounders(X.reshape(-1,1), Y.reshape(-1,1))
+        _, _, result, _ = causal_inference(X.reshape(-1,1), Y.reshape(-1,1))
         self.assertEqual(False, result)
 
 if __name__ == "main":

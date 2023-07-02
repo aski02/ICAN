@@ -25,7 +25,7 @@ class TestICAN(unittest.TestCase):
         X = T * np.log(T) + Nx
         Y = np.square(T) + Ny
 
-        _, _, result, _ = causal_inference(X.reshape(-1,1), Y.reshape(-1,1))
+        _, _, _, _, result, _ = causal_inference(X.reshape(-1,1), Y.reshape(-1,1))
         self.assertEqual(True, result)
 
     def test_no_CAN(self):
@@ -39,16 +39,17 @@ class TestICAN(unittest.TestCase):
         Nx, Ny: dependent on T
         '''
         
-        n = 100     # number of data points
-
-        T = np.linspace(0.1, 1, n).reshape(-1,1)
-        Nx = 0.1 * T
-        Ny = 0.4 * T
-        X = T * np.log(T) + Nx
-        Y = np.square(T) + Ny
-
-        _, _, result, _ = causal_inference(X.reshape(-1,1), Y.reshape(-1,1))
+        n = 120     # number of data points
+        
+        T = np.linspace(0.1, 1, n)
+        Nx = 5 * T * np.random.uniform(-0.15, 0.15, size=n)
+        Ny = 8 * T * np.random.uniform(-0.15, 0.15, size=n)
+        
+        X = 4 * (T+1.2)**3 + 0.1 * T + Nx
+        Y = 3.3 * (T-0.5)**2 + 0.3 * T + Ny
+        
+        _, _, _, _, result, _ = causal_inference(X.reshape(-1,1), Y.reshape(-1,1))
         self.assertEqual(False, result)
-
+        
 if __name__ == "main":
     unittest.main() 

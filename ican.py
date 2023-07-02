@@ -1,17 +1,12 @@
 import numpy as np
 from scipy.optimize import minimize
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import LinearRegression
-from sklearn.pipeline import make_pipeline
 from sklearn.manifold import Isomap
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import DotProduct, WhiteKernel, RBF
-from matplotlib.backends.backend_pdf import PdfPages
-from datasets import generate_data
-from sklearn.gaussian_process.kernels import ExpSineSquared
+from sklearn.gaussian_process.kernels import DotProduct, WhiteKernel, RBF, ExpSineSquared
+from sklearn.neighbors import NearestNeighbors
 from hsic import hsic_gam
 
-# paper used Isomap
+# Initial dimensionality Reduction using Isomap
 def dimReduction(X, Y):
     X = X.flatten()
     Y = Y.flatten()
@@ -25,14 +20,14 @@ def dimReduction(X, Y):
 
     return T_hat
 
-# using the method proposed in the paper
 def fitCurve(X, Y):
     # Initial dimensionality reduction
     T_hat = dimReduction(X, Y)
-
-    kernel = 1.0 * ExpSineSquared(1.0, 5.0) + WhiteKernel(1e-1)
-    s1_hat = GaussianProcessRegressor(kernel=kernel)
-    s2_hat = GaussianProcessRegressor(kernel=kernel)
+    
+    # Define kernel for Gaussian Process Regression
+    kernel = RBF(length_scale=1.0, length_scale_bounds=(1e-2, 1e2)) + WhiteKernel(noise_level=1.0, noise_level_bounds=(1e-2, 0.5))
+    s1_hat = GaussianProcessRegressor(kernel=kernel, alpha=1e-1, normalize_y=True, n_restarts_optimizer=10)
+    s2_hat = GaussianProcessRegressor(kernel=kernel, alpha=1e-1, normalize_y=True, n_restarts_optimizer=10)
 
     for _ in range(5):
         # Step 1: Estimate s_hat using Gaussian Process Regression
@@ -47,7 +42,7 @@ def fitCurve(X, Y):
         # Minimize l2-distance w.r.t. T_hat
         init_guess = T_hat.flatten()
         T_hat_new = minimize(l2dist, init_guess, method="L-BFGS-B").x.reshape(-1, 1)
-
+        
         # Check for convergence
         if np.linalg.norm(T_hat_new - T_hat) / np.linalg.norm(T_hat) < 1e-4:
             break
@@ -56,7 +51,7 @@ def fitCurve(X, Y):
 
     return s1_hat, s2_hat, T_hat
 
-# paper used Hilbert-Schmidt Independence Criterion
+# Independence test using Hilbert-Schmidt Independence Criterion
 def dep(X1, X2):
     X1 = X1.reshape(-1, 1)
     X2 = X2.reshape(-1, 1)
@@ -87,38 +82,25 @@ def projection(T_hat, s1_hat, s2_hat, X, Y):
 
     # Minimize dependence w.r.t. T_hat
     init_guess = T_hat.flatten()
-    T_hat = minimize(depSum, init_guess, method="L-BFGS-B").x.reshape(-1, 1)
+    T_hat = minimize(depSum, init_guess, method="Nelder-Mead").x.reshape(-1, 1)
 
     return T_hat
 
-# paper used non-linear regression (no particular method specified)
+# Regression using Gaussian Processes
 def regressionGPR(T_hat, X, Y, Nx_hat, Ny_hat):
-    kernel = 1.0 * ExpSineSquared(1.0, 5.0) + WhiteKernel(1e-1)
+    kernel = RBF(length_scale=1.0, length_scale_bounds=(1e-2, 1e2)) + WhiteKernel(noise_level=1.0, noise_level_bounds=(1e-2, 0.5))
     
-    s1_hat = GaussianProcessRegressor(kernel=kernel)
-    s2_hat = GaussianProcessRegressor(kernel=kernel)
+    s1_hat = GaussianProcessRegressor(kernel=kernel, alpha=1e-1, normalize_y=True, n_restarts_optimizer=10)
+    s2_hat = GaussianProcessRegressor(kernel=kernel, alpha=1e-1, normalize_y=True, n_restarts_optimizer=10)
 
     s1_hat.fit(T_hat, X - Nx_hat)
-    s2_hat.fit(T_hat, Y - Ny_hat)
-
-    return s1_hat, s2_hat
-
-# currently not used
-def regressionPoly(T_hat, X, Y, Nx_hat, Ny_hat, deg=3):
-    s1_hat = make_pipeline(PolynomialFeatures(deg), LinearRegression())
-    s1_hat.fit(T_hat, X - Nx_hat)
-
-    s2_hat = make_pipeline(PolynomialFeatures(deg), LinearRegression())
     s2_hat.fit(T_hat, Y - Ny_hat)
 
     return s1_hat, s2_hat
 
 # ICAN algorithm
-def identify_confounders(X, Y, K=5):   # paper used K = 5000 (but if successful then termination usually occurs within 1-2 iterations)
+def identify_confounders(X, Y, K=4):
     s1_hat, s2_hat, T_hat = fitCurve(X, Y)
-
-    Nx_hat = X - s1_hat.predict(T_hat).reshape(-1, 1)
-    Ny_hat = Y - s2_hat.predict(T_hat).reshape(-1, 1)
 
     for _ in range(K):
         T_hat = projection(T_hat, s1_hat, s2_hat, X, Y)
@@ -133,18 +115,18 @@ def identify_confounders(X, Y, K=5):   # paper used K = 5000 (but if successful 
         s1_hat, s2_hat = regressionGPR(T_hat, X, Y, Nx_hat, Ny_hat)
 
     return [T_hat, s1_hat, s2_hat, -1, False]  # no CAN-model fitted
-    
+
+# Check if X->Y can be rejected
 def check_model(X, Y):
     # Gaussian Process Regression of Y onto X
-    kernel = 1.0 * ExpSineSquared(1.0, 5.0) + WhiteKernel(1e-1)
+    kernel = RBF(length_scale=1.0, length_scale_bounds=(1e-2, 1e2)) + WhiteKernel(noise_level=1.0, noise_level_bounds=(1e-2, 1e2))
+    model = GaussianProcessRegressor(kernel=kernel, alpha=1e-2, normalize_y=True, n_restarts_optimizer=10)
     
-    model = GaussianProcessRegressor(kernel=kernel)
     model.fit(X, Y)
-    
-    residuals = Y - model.predict(X)
+    residuals = Y.reshape(-1,1) - model.predict(X).reshape(-1,1)
     
     # Check for dependent residuals using HSIC
-    testStat, thresh, p = hsic_gam(X, residuals, alph=0.05)
+    testStat, thresh, p = hsic_gam(X.reshape(-1,1), residuals.reshape(-1,1), alph=0.05)
 
     if testStat < thresh:
         return True	# independent residuals
@@ -152,30 +134,25 @@ def check_model(X, Y):
     	return False	# dependent residuals
 
 # Distinguish between X->Y, Y->X, X<-T->Y, no CAN model
-def causal_inference(X, Y, threshold=2):
+def causal_inference(X, Y, threshold=1.1):
     # Run ICAN
     T_hat, s1_hat, s2_hat, var, result = identify_confounders(X, Y)
     if (result == False):
-    	return T_hat, var, result, "No CAN Model"
-    
-    # Decide causal structure based on variance
-    if var < (1/threshold):
-    	return T_hat, var, result, "X->Y"
-    elif var > threshold:
-    	return T_hat, var, result, "Y->X"
-    else:
-    	return T_hat, var, result, "X<-T->Y"
-    
-    # Currently not used
+    	return T_hat, var, s1_hat, s1_hat, result, "No CAN Model"
+   
     # Check if X->Y or Y->X can be rejected
     modelXY = check_model(X, Y)
     modelYX = check_model(Y, X)
     
+    # Distinguish between X->Y, Y->X and X<-T->Y
     if (not modelXY) and (not modelYX):
-    	return T_hat, var, result, "X<-T->Y"
+    	return T_hat, var, s1_hat, s2_hat, result, "X<-T->Y"
+    elif modelXY and modelYX:
+    	return T_hat, var, s1_hat, s2_hat, result, "both directions possible"
     elif modelXY and var < (1/threshold):
-    	return T_hat, var, result, "X->Y"
+    	return T_hat, var, s1_hat, s2_hat, result, "X->Y"
     elif modelYX and var > threshold:
-    	return T_hat, var, result, "Y->X"
+    	return T_hat, var, s1_hat, s2_hat, result, "Y->X"
     else:
-    	return T_hat, var, result, "X<-T->Y"
+    	return T_hat, var, s1_hat, s2_hat, result, "X<-T->Y"
+

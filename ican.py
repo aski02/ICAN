@@ -134,7 +134,7 @@ def check_model(X, Y):
     	return False	# dependent residuals
 
 # Distinguish between X->Y, Y->X, X<-T->Y, no CAN model
-def causal_inference(X, Y, threshold=1.1):
+def causal_inference(X, Y, threshold=1.5):
     # Run ICAN
     T_hat, s1_hat, s2_hat, var, result = identify_confounders(X, Y)
     if (result == False):

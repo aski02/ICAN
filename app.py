@@ -1,145 +1,236 @@
 import tkinter as tk
+from tkinter import ttk
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
-from sklearn.neighbors import NearestNeighbors
 from datasets import generate_data
 from ican import causal_inference
 
+
 class Application(tk.Tk):
     def __init__(self):
-        tk.Tk.__init__(self)
+        super().__init__()
         self.title("ICAN")
+        self.geometry("1200x800")
+        self.configure(bg="white")
 
-        # Frames for inputting dataset and datapoints
-        self.input_frame = tk.Frame(self)
-        self.input_frame.pack(side=tk.TOP)
+        self.variance_value = tk.StringVar()
+        self.hsic_value = tk.StringVar()
+        self.neighbor_value = tk.StringVar()
 
-        self.dataset_label = tk.Label(self.input_frame, text="Dataset:")
-        self.dataset_label.pack(side=tk.LEFT)
-        self.dataset_entry = tk.Entry(self.input_frame)
-        self.dataset_entry.pack(side=tk.LEFT)
+        self._configure_grids()
+        self._create_main_frame()
 
-        self.datapoints_label = tk.Label(self.input_frame, text="Datapoints:")
-        self.datapoints_label.pack(side=tk.LEFT)
-        self.datapoints_entry = tk.Entry(self.input_frame)
-        self.datapoints_entry.pack(side=tk.LEFT)
 
-        # Button for running the algorithm
-        self.run_button = tk.Button(self.input_frame, text="Run ICAN", command=self.run_ican)
-        self.run_button.pack(side=tk.LEFT)
+    def _configure_grids(self):
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
 
-        # Frame for outputting causal structure
-        self.structure_frame = tk.Frame(self)
-        self.structure_frame.pack(side=tk.TOP)
-        self.structure_label = tk.Label(self.structure_frame, text="Structure:")
-        self.structure_label.pack(side=tk.LEFT)
-        self.structure_output = tk.Text(self.structure_frame, height=1, width=20)
-        self.structure_output.pack()
 
-        # Frame for outputting variance
-        self.var_frame = tk.Frame(self)
-        self.var_frame.pack(side=tk.TOP)
-        self.var_label = tk.Label(self.var_frame, text="Var(X) / Var(Y):")
-        self.var_label.pack(side=tk.LEFT)
-        self.var_output = tk.Text(self.var_frame, height=1, width=20)
-        self.var_output.pack()
+    def _create_main_frame(self):
+        self.canvas = tk.Canvas(self)
+        self.canvas.grid(row=0, column=0, sticky="nsew")
 
-        # Frame for plots
-        self.plot_frame = tk.Frame(self)
-        self.plot_frame.pack(side=tk.BOTTOM)
+        scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        scrollbar.grid(row=0, column=1, sticky="ns")
+        self.canvas.configure(yscrollcommand=scrollbar.set)
 
-        # Create empty plots
-        self.create_empty_plots()
+        main_frame = ttk.Frame(self.canvas, padding="20")
+        self.canvas.create_window((0, 0), window=main_frame, anchor="nw")
+        main_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+
+        self.input_frame = self._create_input_frame(main_frame)
+        self.input_frame.grid(row=1, pady=10, sticky="ew")
+
+        self.output_frame = self._create_output_frame(main_frame)
+        self.output_frame.grid(row=3, pady=10, sticky="ew")
+
+        self.plot_frame = ttk.LabelFrame(main_frame, text="Plots", padding="10")
+        self.plot_frame.grid(row=5, sticky="ew")
+
+
+    def _create_input_frame(self, parent):
+        frame = ttk.LabelFrame(parent, text="Inputs", padding=(20, 10))
+        dataset_frame = ttk.Frame(frame)
+        dataset_frame.grid(row=0, column=0, padx=5, sticky="ew")
+        _, self.dataset_combobox = self._create_label_and_combobox(dataset_frame, "Dataset:", [f"Dataset {i}" for i in range(1, 17)], row=0, column=0)
+        _, self.datapoints_entry = self._create_label_and_entry(dataset_frame, "Datapoints:", row=1, column=0)
+        self.datapoints_entry.insert(0, "50")
+        _, self.iterations_entry = self._create_label_and_entry(dataset_frame, "Iterations:", row=2, column=0)
+        self.iterations_entry.insert(0, "3")
+
+        other_frame = ttk.Frame(frame)
+        other_frame.grid(row=0, column=1, padx=5, sticky="ew")
+        _, self.dim_reduction_combobox = self._create_label_and_combobox(other_frame, "Dim. reduction:", ["Isomap", "TSNE", "LLE", "PCA", "KernelPCA", "SpectralEmbedding"], row=0, column=0)
+        _, self.independence_combobox = self._create_label_and_combobox(other_frame, "Independence test:", ["HSIC", "MI"], row=1, column=0)
+        _, self.regression_combobox = self._create_label_and_combobox(other_frame, "Regression:", ["GPR", "DecisionTree", "RandomForest"], row=2, column=0)
+                
+        _, self.minFitting_combobox = self._create_label_and_combobox(other_frame, "Minimize distance:", ["L-BFGS-B", "SLSQP", "Nelder-Mead", "BFGS", "powell", "TNC", "CG", "trust-constr"], row=0, column=2)
+        _, self.minProjection_combobox = self._create_label_and_combobox(other_frame, "Minimize dependence:", ["Nelder-Mead", "SLSQP", "L-BFGS-B", "BFGS", "powell", "TNC", "CG", "SLSQP", "trust-constr"], row=1, column=2)
+        _, self.kernel_combobox = self._create_label_and_combobox(other_frame, "Kernel for GPR:", ["Matern + White", "Matern + ExpSineSquared", "Matern", "RBF + White", "RBF", "DotProduct + White", "DotProduct", "RationalQuadratic + White", "RationalQuadratic", "ExpSineSquared + White", "ExpSineSquared"], row=2, column=2)
+        
+        thresholds_frame = ttk.Frame(frame)
+        thresholds_frame.grid(row=0, column=2, padx=5, sticky="ew")
+        self._create_label_and_slider(thresholds_frame, "Variance threshold:", row=0, column=0, slider_range=(1.0, 10.0), value_var=self.variance_value, init_value=3.0)
+        self._create_label_and_slider(thresholds_frame, "Significance level:", row=1, column=0, slider_range=(0.01, 0.2), value_var=self.hsic_value, init_value=0.05)
+        self._create_label_and_slider(thresholds_frame, "Neighbors for dim. red.:", row=2, column=0, slider_range=(0.05, 0.5), value_var=self.neighbor_value, init_value=0.1)
+        
+        self.run_button = ttk.Button(frame, text="Run ICAN", command=self.run_ican)
+        self.run_button.grid(row=1, columnspan=3, pady=10)
+
+        return frame
+
+
+    def _create_label_and_combobox(self, parent, text, values, row, column):
+        label = ttk.Label(parent, text=text)
+        label.grid(row=row, column=column, padx=5, pady=5)
+        
+        combobox = ttk.Combobox(parent, values=values)
+        combobox.grid(row=row, column=column+1, padx=5, pady=5)
+        combobox.set(values[0])
+
+        return label, combobox
+
+
+    def _create_label_and_entry(self, parent, text, row, column):
+        label = ttk.Label(parent, text=text)
+        label.grid(row=row, column=column, padx=5, pady=5)
+
+        entry = ttk.Entry(parent)
+        entry.grid(row=row, column=column+1, padx=5, pady=5)
+
+        return label, entry
+
+
+    def _create_label_and_slider(self, parent, text, row, column, slider_range=(1.0, 10.0), value_var=None, value_column_offset=2, init_value=None):
+        label = ttk.Label(parent, text=text)
+        label.grid(row=row, column=column, padx=5, pady=5)
+
+        slider = ttk.Scale(parent, from_=slider_range[0], to=slider_range[1], orient=tk.HORIZONTAL, command=lambda val, var=value_var: self._update_slider_value(val, var))
+        slider.grid(row=row, column=column+1, padx=5, pady=5)
+        
+        if init_value:
+        	slider.set(init_value)
+        else:
+        	slider.set(slider_range[1] / 2.0)
+
+        value_label = ttk.Label(parent, textvariable=value_var)
+        value_label.grid(row=row, column=column+value_column_offset, padx=5, pady=5)
+
+        return label, slider, value_label
+
+
+    def _update_slider_value(self, val, value_var):
+        value_var.set(f"{float(val):.2f}")
+
+
+    def _create_output_frame(self, parent):
+        frame = ttk.LabelFrame(parent, text="Outputs", padding=(20, 10))  # Modified to add a LabelFrame
+        frame.grid(row=1, sticky="ew")
+
+        # Variance quotient Output
+        self._create_output_label_pair(frame, "Variance quotient:", row=0)
+        _, self.var_output_value = self._create_output_label_pair(frame, "Variance quotient:", row=0)
+
+        # P-values Output
+        self._create_output_label_pair(frame, "p-value for X->Y:", row=1)
+        _, self.p1_output_value = self._create_output_label_pair(frame, "p-value for X->Y:", row=1)
+        self._create_output_label_pair(frame, "p-value for Y->X:", row=2)
+        _, self.p2_output_value = self._create_output_label_pair(frame, "p-value for Y->X:", row=2)
+
+        # Structure Output
+        self._create_output_label_pair(frame, "Structure:", row=3)
+        _, self.structure_output_value = self._create_output_label_pair(frame, "Structure:", row=3)
+
+        return frame
+
+
+    def _create_output_label_pair(self, parent, text, row):
+        label = ttk.Label(parent, text=text)
+        label.grid(row=row, column=0, padx=5, pady=5)
+
+        value_label = ttk.Label(parent, text="N/A")
+        value_label.grid(row=row, column=1, padx=5, pady=5)
+
+        return label, value_label
+
 
     def run_ican(self):
-        # Get inputs
-        dataset = int(self.dataset_entry.get())
+        dataset_value = int(self.dataset_combobox.get().split()[-1]) - 1
         datapoints = int(self.datapoints_entry.get())
-
-        # Run ICAN
-        T, X, Y, X_true, Y_true = generate_data(datapoints, dataset)
-        T_hat, var, s1_hat, s2_hat, result, structure = causal_inference(X.reshape(-1, 1), Y.reshape(-1, 1))
+        iterations = int(self.iterations_entry.get())
         
-        # Generate plots
+        dim_reduction = self.dim_reduction_combobox.get()
+        independence_method = self.independence_combobox.get()
+        regression_method = self.regression_combobox.get()
+        kernel = self.kernel_combobox.get()
+        
+        min_distance = self.minFitting_combobox.get()
+        min_projection = self.minProjection_combobox.get()
+        
+        variance_threshold = float(self.variance_value.get())
+        independence_threshold = float(self.hsic_value.get())
+        neighbor_percentage = float(self.neighbor_value.get())
+        
+        # Run ICAN
+        T, X, Y= generate_data(datapoints, dataset_value)
+        
+        T_hat, var, s1_hat, s2_hat, result, structure, p1, p2 = causal_inference(X.reshape(-1, 1), Y.reshape(-1, 1), dim_reduction, neighbor_percentage, iterations, kernel, variance_threshold, independence_threshold, regression_method, independence_method, min_distance, min_projection)
+        
+        # Normalize to variance 1
+        X = (X - np.mean(X)) / np.std(X)
+        Y = (Y - np.mean(Y)) / np.std(Y)
+        
+        self.var_output_value["text"] = str(var)
+        self.structure_output_value["text"] = structure
+        self.p1_output_value["text"] = str(p1)
+        self.p2_output_value["text"] = str(p2)
+
         self.clear_plot()
-        self.create_plots(T, T_hat, X, X_true, Y, Y_true, s1_hat, s2_hat, structure)
+        self.create_plots(T, T_hat, X, Y, s1_hat, s2_hat, structure)
 
-        # Display causal structure
-        self.structure_output.delete('1.0', tk.END)
-        self.structure_output.insert(tk.END, structure)
 
-        # Display variance
-        self.var_output.delete('1.0', tk.END)
-        self.var_output.insert(tk.END, var)
-
-    def create_plots(self, T, T_hat, X, X_true, Y, Y_true, s1_hat, s2_hat, structure):
-        # Plot curve using Nearest Neighbors (because s=(u,v) is not always injective)
-        def plotCurves(X, Y, style):
-            data = np.column_stack([X, Y])  # Needed for NN
-
-            # Use NearestNeighbors to find two closest points
-            nbrs = NearestNeighbors(n_neighbors=3, algorithm="ball_tree").fit(data)
-            distances, indices = nbrs.kneighbors(data)
-
-            # Draw lines to two closest neighbors for each point (assuming they are the left and right neighbors)
-            for i in range(len(data)):
-                for j in range(1, 3):
-                    axs[1, 0].plot([data[i, 0], data[indices[i, j], 0]], [data[i, 1], data[indices[i, j], 1]], style)
-
-        Nx = X.reshape(-1, 1) - s1_hat.predict(T_hat.reshape(-1, 1)).reshape(-1, 1)
-        Ny = Y.reshape(-1, 1) - s2_hat.predict(T_hat.reshape(-1, 1)).reshape(-1, 1)
-
-        Nx = Nx.reshape(-1, 1)
-        Ny = Ny.reshape(-1, 1)
+    def create_plots(self, T, T_hat, X, Y, s1_hat, s2_hat, structure):
+        Nx = (X.reshape(-1, 1) - s1_hat.predict(T_hat.reshape(-1, 1)).reshape(-1, 1)).reshape(-1, 1)
+        Ny = (Y.reshape(-1, 1) - s2_hat.predict(T_hat.reshape(-1, 1)).reshape(-1, 1)).reshape(-1, 1)
+        
         T_hat = T_hat.reshape(-1, 1)
 
         fig, axs = plt.subplots(3, 2, figsize=(10, 10))
 
-        # Scatter plot for X and Y
-        axs[0, 0].scatter(X, Y)
-        axs[0, 0].set_title('X vs Y')
+        # Scatter plots and curves
+        axs[0, 0].scatter(X, Y, edgecolors="b", facecolors="none", s=30, linewidth=0.5)
+        axs[0, 0].set_title("X vs Y")
+        axs[1, 0].set_title("estimated curve")
+        axs[1, 0].scatter(X, Y, edgecolors="b", facecolors="none", s=30, linewidth=0.5)
 
-        # Plot curves
-        axs[1, 0].set_title("true (black) and estimated (red) curves")
-        axs[1, 0].scatter(X, Y)
-
-        T_fine = np.linspace(T_hat[0], T_hat[-1], 2000)
-
+        T_fine = T_hat
         predicted_X = s1_hat.predict(T_fine).reshape(-1, 1)
         predicted_Y = s2_hat.predict(T_fine).reshape(-1, 1)
-
-        plotCurves(predicted_X, predicted_Y, "r-")
-        plotCurves(X_true, Y_true, "k-")
+        axs[1, 0].plot(predicted_X, predicted_Y, "r--", linewidth=1.2)
 
         if structure == "X<-T->Y":
-            # Scatter plot for X and Y
-            axs[2, 0].scatter(T, T_hat)
-            axs[2, 0].set_title('true confounder vs estimated confounder')
+            axs[2, 0].scatter(T, T_hat, edgecolors="b", facecolors="none", s=30, linewidth=0.5)
+            axs[2, 0].set_title("true confounder vs estimated confounder")
 
-        # Scatter plot for Nx and Ny
-        axs[0, 1].scatter(Nx, Ny)
-        axs[0, 1].set_title('estimated Nx vs estimated Ny')
-
-        # Scatter plot for T and Nx
-        axs[1, 1].scatter(T_hat, Nx)
-        axs[1, 1].set_title('estimated T vs estimated Nx')
-
-        # Scatter plot for T and Ny
-        axs[2, 1].scatter(T_hat, Ny)
-        axs[2, 1].set_title('estimated T vs estimated Ny')
+        axs[0, 1].scatter(Nx, Ny, edgecolors="b", facecolors="none", s=30, linewidth=0.5)
+        axs[0, 1].set_title("estimated Nx vs estimated Ny")
+        axs[1, 1].scatter(T_hat, Nx, edgecolors="b", facecolors="none", s=30, linewidth=0.5)
+        axs[1, 1].set_title("estimated T vs estimated Nx")
+        axs[2, 1].scatter(T_hat, Ny, edgecolors="b", facecolors="none", s=30, linewidth=0.5)
+        axs[2, 1].set_title("estimated T vs estimated Ny")
 
         fig.tight_layout()
         canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
         canvas.draw()
         canvas.get_tk_widget().pack()
 
+
     def clear_plot(self):
         for widget in self.plot_frame.winfo_children():
             widget.destroy()
 
-    # Create empty plots
+
     def create_empty_plots(self):
         for widget in self.plot_frame.winfo_children():
             widget.destroy()

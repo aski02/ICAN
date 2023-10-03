@@ -18,6 +18,7 @@ alph 		level of test
 Outputs:
 testStat	test statistics
 thresh		test threshold for level alpha test
+p			p-value
 """
 
 from __future__ import division
@@ -109,4 +110,4 @@ def hsic_gam(X, Y, alph = 0.5):
 	
 	p = 1 - gamma.cdf(testStat, al, scale=bet)
 
-	return (testStat, thresh, p)
+	return (testStat, thresh, p[0,0])

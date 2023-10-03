@@ -34,8 +34,14 @@ def generate_data(n, dataset):
         return generate_data_13(n)
     elif dataset == 14:
         return generate_data_14(n)
-    else:
+    elif dataset == 15:
         return generate_data_15(n)
+    elif dataset == 16:
+        return generate_data_16(n)
+    elif dataset == 17:
+        return generate_data_17(n)
+    else:
+        return generate_data_0(n)
 
 
 # X<-T->Y
@@ -73,195 +79,207 @@ def generate_data_1(n):
     return (dowjones_prices[:n], apple_prices[:n],
             caterpillar_prices[:n])
 
-
 # Y->X
 def generate_data_2(n):
-    data = pd.read_csv("data/hfi_cc_2019.csv")
-
-    ef = pd.to_numeric(data["ef_score"], errors="coerce").values
-    hf = pd.to_numeric(data["hf_score"], errors="coerce").values
-
-    return (np.arange(0, n), ef[:n], hf[:n])
-
+    column_names = [
+        "Sex", "Length", "Diameter", "Height", 
+        "Whole weight", "Shucked weight", 
+        "Viscera weight", "Shell weight", "Rings"
+    ]
+    
+    data = pd.read_csv('data/abalone.data', header=None, names=column_names)
+    
+    rings = data["Rings"].values
+    shell_weight = data["Shell weight"].values
+    
+    return (np.arange(0, n), shell_weight[:n], rings[:n])
 
 # X->Y
 def generate_data_3(n):
+    data = pd.read_csv("data/geyser.csv", delimiter=";")
+    
+    eruptions = data["eruptions"].values
+    waiting = data["waiting"].values
+    
+    return (np.arange(0, n), eruptions[:n], waiting[:n])
+
+# X->Y
+def generate_data_4(n):
     data = pd.read_csv("data/energy_dataset.csv")
     
-    temperature = data["total load actual"].values
-    feels_like = data["price actual"].values
+    load = data["total load actual"].values
+    price = data["price actual"].values
     
-    return (np.arange(0, n), temperature[:n], feels_like[:n])
-
+    return (np.arange(0, n), load[:n], price[:n])
 
 # X<-T->Y
-def generate_data_4(n):
-    np.random.seed(seed=0)
-
-    T = np.linspace(0.1, 1, n)
-    Ny = np.random.uniform(-0.035, 0.035, size=len(T))
-    Nx = np.random.uniform(-0.035, 0.035, size=len(T))
-
-    X = np.sqrt(T) + Nx
-    Y = np.square(T - 0.5) + Ny
-
-    return (T, X, Y)
-
-
-# Y->X
 def generate_data_5(n):
-    np.random.seed(seed=1)
-
-    T = np.linspace(0.1, 1, n)
-    Nx = np.random.uniform(-0.08, 0.08, size=len(T))
-    Ny = np.random.uniform(-0.00015, 0.0, size=n)
-
-    X = np.square(T - 0.3) + Nx
-    Y = 0.7 * T + Ny
-
-    return (T, X, Y)
-
-
-# X<-T->Y
-def generate_data_6(n):
     np.random.seed(seed=0)
 
     T = np.linspace(0.1, 1, n)
     Ny = np.random.uniform(-0.01, 0.02, size=len(T))
     Nx = np.random.uniform(-0.01, 0.015, size=len(T))
 
-    X_true = np.log(T) * np.log(T)
-    Y_true = 0.7 * np.square(T)
-
-    X = np.log(T) * np.log(T) + Nx
-    Y = 0.7 * np.square(T) + Ny
+    X = np.sin(T) * np.cos(T) + Nx
+    Y = 0.7 * np.square(T) + np.sin(T) + Ny
 
     return (T, X, Y)
-
-
+    
 # X->Y
-def generate_data_7(n):
+def generate_data_6(n):
     np.random.seed(seed=1)
-
-    T = np.linspace(0.1, 1, n)
-    Nx = np.random.uniform(-0.015, 0.0, size=n)
-    Ny = np.random.uniform(-0.08, 0.08, size=len(T))
-
-    X = T + Nx
-    Y = np.square(T - 0.5) + Ny
-
-    return (T, X, Y)
-
-
-# X->Y
-def generate_data_8(n):
-    np.random.seed(seed=1)
-
-    T = np.linspace(0.1, 1, n)
-    Nx = np.random.uniform(-0.0, 0.02, size=n)
-    Ny = np.random.uniform(-0.06, 0.08, size=len(T))
-
-    X = T + Nx
-    Y = np.square(np.exp(T) - 0.3) + Ny
-
-    return (T, X, Y)
-
-
-# Y->X
-def generate_data_9(n):
-    np.random.seed(seed=0)
-
-    T = np.linspace(0.1, 1, n)
-    Nx = np.random.uniform(-0.09, 0.09, size=len(T))
-    Ny = np.random.uniform(-0.01, 0.001, size=n)
-
-    X = np.square(T) * np.log(T) * 2 + Nx
-    Y = 0.9 * T + 0.01 + Ny
-
-    return (T, X, Y)
-
-
-# no CAN model
-def generate_data_10(n):
-    np.random.seed(seed=1)
-
-    T = np.linspace(0.1, 1, n)
-    Nx = 5 * T * np.random.uniform(-0.15, 0.15, size=n)
-    Ny = 8 * T * np.random.uniform(-0.15, 0.15, size=n)
-
-    X = 4 * (T + 1.2) ** 3 + 0.1 * T + Nx
-    Y = 3.3 * (T - 0.5) ** 2 + 0.3 * T + Ny
-
-    return (T, X, Y)
-
-
-# X->Y
-def generate_data_11(n):
-    np.random.seed(seed=3)
-
-    T = np.linspace(0.1, 1, n)
-    Nx = np.random.uniform(-0.015, 0.0, size=n)
-    Ny = np.random.uniform(-0.08, 0.08, size=len(T))
-
-    X = T + Nx
-    Y = np.sin(T) + Ny
-
-    return (T, X, Y)
-
-
-# X->Y
-
-def generate_data_12(n):
-    np.random.seed(seed=3)
-
-    T = np.linspace(0.1, 1, n)
-    Nx = np.random.uniform(-0.0, 0.001, size=n)
-    Ny = np.random.uniform(-0.06, 0.08, size=len(T))
-
-    X = 1.3 * T + Nx
-    Y = np.log(T) + Ny
-
-    return (T, X, Y)
-
-
-# Y->X
-def generate_data_13(n):
-    np.random.seed(seed=3)
-
-    T = np.linspace(0.1, 1, n)
-    Nx = np.random.uniform(-0.08, 0.08, size=len(T))
-    Ny = np.random.uniform(-0.00015, 0.0, size=n)
-
-    X = np.sin(T) + Nx
-    Y = T + Ny
-
-    return (T, X, Y)
-
-
-# Y->X
-def generate_data_14(n):
-    np.random.seed(seed=2)
-
-    T = np.linspace(0.1, 1, n)
-    Nx = np.random.uniform(-0.09, 0.09, size=len(T))
-    Ny = np.random.uniform(-0.01, 0.001, size=n)
-
-    X = np.exp(T) + Nx
-    Y = 0.7 * T + Ny
-
-    return (T, X, Y)
-
-
-# X->Y
-def generate_data_15(n):
-    np.random.seed(seed=4)
 
     T = np.linspace(0.1, 1, n)
     Nx = np.random.uniform(-0.01, 0.0, size=n)
-    Ny = np.random.uniform(0.02, 0.19, size=len(T))
+    Ny = np.random.uniform(-0.06, 0.06, size=len(T))
 
     X = T + Nx
-    Y = np.cos(T) * np.sin(T) + Ny
+    Y = np.square(np.sin(T) - 0.5) + Ny
+
+    return (T, X, Y)
+
+# X<-T->Y 
+def generate_data_7(n):
+    np.random.seed(seed=2)
+
+    T = np.linspace(0.1, 1, n)
+    Ny = np.random.normal(0, 0.03, size=len(T))
+    Nx = np.random.normal(0, 0.03, size=len(T))
+
+    X = np.sin(T) + np.sqrt(T) + Nx
+    Y = np.cos(2*T) * np.square(T - 0.4) + Ny
+
+    return (T, X, Y)
+
+# X<-T->Y 
+def generate_data_8(n):
+    np.random.seed(seed=3)
+
+    T = np.linspace(0.1, 1, n)
+    Ny = np.random.uniform(-0.02, 0.02, size=len(T)) * 2
+    Nx = np.random.uniform(-0.02, 0.02, size=len(T)) * 2
+
+    X = np.sin(2*T) * np.cos(2*T) + Nx
+    Y = 0.6 * np.square(T) + np.sin(3*T) + Ny
+
+    return (T, X, Y)
+
+# Y->X
+def generate_data_9(n):
+    np.random.seed(seed=4)
+
+    T = np.linspace(0.1, 1, n)
+    Nx = np.random.uniform(-0.08, 0.09, size=len(T))
+    Ny = np.random.uniform(-0.01, 0.005, size=n)
+
+    X = np.square(T) * np.log(2*T) * np.sin(T)+ Nx
+    Y = 0.8 * T + Ny
+
+    return (T, X, Y)
+    
+# X<-T->Y
+def generate_data_10(n):
+    np.random.seed(seed=2)
+
+    T = abs(np.random.normal(0.5, 0.2, n))
+    Nx = np.random.uniform(-0.01, 0.015, size=len(T))
+    Ny = np.random.uniform(-0.01, 0.015, size=len(T))
+
+    X = np.log(T) * np.sin(T) + Nx
+    Y = np.sin(T) * np.cos(T)**2 + Ny
+
+    return (T, X, Y)
+
+# Y->X
+def generate_data_11(n):
+    np.random.seed(seed=2)
+
+    T = np.random.uniform(0.1, 1, n)
+    Nx = np.random.uniform(-0.05, 0.05, size=len(T))
+    Ny = np.random.uniform(-0.01, 0.01, size=len(T))
+
+    X = np.sin(T)**2 + Nx
+    Y = T**3 + Ny
+
+    return (T, X, Y)
+
+# X->Y
+def generate_data_12(n):
+    np.random.seed(seed=2)
+
+    T = np.linspace(0.1, 1, n)
+    Nx = np.random.uniform(-0.01, 0.01, size=len(T))
+    Ny = np.random.uniform(-0.05, 0.05, size=len(T))
+
+    X = np.sqrt(T) + Nx
+    Y = np.sin(T)**2 + Ny
+
+    return (T, X, Y)
+    
+# X<-T->Y
+def generate_data_13(n):
+    np.random.seed(seed=5)
+    
+    T = np.linspace(0.1, 1, n)
+    Nx = np.random.uniform(-0.02, 0.02, size=len(T))
+    Ny = np.random.uniform(-0.02, 0.02, size=len(T))
+    
+    X = np.sin(2*T) * np.cos(2*T) + Nx
+    Y = np.sin(T) * np.square(T - 0.3) + Ny
+    
+    return (T, X, Y)
+
+# X->Y
+def generate_data_14(n):
+    np.random.seed(seed=6)
+    
+    T = np.linspace(0.1, 1, n)
+    Nx = np.random.uniform(-0.005, 0.005, size=len(T))
+    Ny = np.random.uniform(-0.05, 0.04, size=len(T))
+    
+    X = T + Nx
+    Y = np.sin(T**2) + Ny
+    
+    return (T, X, Y)
+
+# X<-T->Y
+def generate_data_15(n):
+    np.random.seed(seed=8)
+    
+    T = np.linspace(0.1, 1, n)
+    
+    Nx = np.random.uniform(-0.02, 0.02, size=len(T))
+    Ny = np.random.uniform(-0.02, 0.02, size=len(T))
+    
+    X = np.sin(T) * np.cos(T) + Nx
+    Y = np.cos(T) * np.square(T - 0.6) + Ny
+    
+    return (T, X, Y)
+
+# X->Y
+def generate_data_16(n):
+    np.random.seed(seed=1)
+
+    T = np.linspace(0.1, 1, n)
+    Nx = np.random.uniform(-0.0005, 0.0, size=n)
+    Ny = np.random.uniform(-0.005, 0.005, size=len(T))
+
+    X = T + Nx
+    Y = np.square(np.sin(T) - 0.5) + Ny
+
+    return (T, X, Y)
+    
+# Y->X
+def generate_data_17(n):
+    np.random.seed(seed=4)
+
+    T = np.linspace(0.1, 1, n)
+    
+    Nx = np.random.normal(0, 0.07, size=len(T))
+    Ny = np.random.normal(0, 0.01, size=n)
+
+    X = np.square(T) * np.log(2*T) * np.sin(T)+ Nx
+    Y = 0.8 * T + Ny
 
     return (T, X, Y)
 

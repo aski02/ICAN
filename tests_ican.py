@@ -1,55 +1,59 @@
-import numpy as np
 import unittest
+from datasets import generate_data
 from ican import causal_inference
 
-# These tests run very long (20-60 min each)
-class TestICAN(unittest.TestCase):
-    def test_CAN(self):
-        '''
-        This test checks if the algorithm correctly concludes that a CAN model can be fitted 
-        ! It doesnt check X->Y, Y->X, X<-T->Y yet !
+class TestComputeAccuracy(unittest.TestCase):
+    
+    def setUp(self):
+        self.dim_reduction = "Isomap"
+        self.neighbor_percentage = 0.1
+        self.iterations = 3
+        self.kernel = "RBF"
+        self.variance_threshold = 2.0
+        self.independence_threshold = 0.05
+        self.regression_method = "GPR"
+        self.independence_method = "HSIC"
+        self.min_distance = "Nelder-Mead"
+        self.min_projection = "Nelder-Mead"
 
-        The data is representing the following CAN-model:
-        X = u(T) + Nx
-        Y = v(T) + Ny
+    def check_dataset(self, dataset_index, expected_structure):
+        T, X, Y = generate_data(40, 6 + dataset_index)
+        X = X.reshape(-1, 1)
+        Y = Y.reshape(-1, 1)
 
-        u,v: non-linear functions
-        Nx, Ny: uniformely distributed in [-0.035, 0.035]
-        '''
+        _, _, _, _, _, structure, _, _ = causal_inference(X, Y, self.dim_reduction, self.neighbor_percentage, self.iterations, self.kernel, self.variance_threshold, self.independence_threshold, self.regression_method, self.independence_method, self.min_distance, self.min_projection)
         
-        n = 100     # number of data points
+        self.assertEqual(structure, expected_structure)
 
-        T = np.linspace(0.1, 1, n).reshape(-1,1)
-        Nx = np.random.uniform(-0.035, 0.035, n).reshape(-1,1)
-        Ny = np.random.uniform(-0.035, 0.035, n).reshape(-1,1)
-        X = T * np.log(T) + Nx
-        Y = np.square(T) + Ny
+    def test_dataset_1(self):
+        self.check_dataset(0, "X->Y")
 
-        _, _, _, _, result, _ = causal_inference(X.reshape(-1,1), Y.reshape(-1,1))
-        self.assertEqual(True, result)
+    def test_dataset_2(self):
+        self.check_dataset(1, "X<-T->Y")
 
-    def test_no_CAN(self):
-        '''
-        This test checks if the algorithm correctly concludes that no CAN model can be fitted
+    def test_dataset_3(self):
+        self.check_dataset(2, "X<-T->Y")
 
-        X = u(T) + Nx
-        Y = v(T) + Ny
+    def test_dataset_4(self):
+        self.check_dataset(3, "Y->X")
 
-        u,v: non-linear functions
-        Nx, Ny: dependent on T
-        '''
-        
-        n = 120     # number of data points
-        
-        T = np.linspace(0.1, 1, n)
-        Nx = 5 * T * np.random.uniform(-0.15, 0.15, size=n)
-        Ny = 8 * T * np.random.uniform(-0.15, 0.15, size=n)
-        
-        X = 4 * (T+1.2)**3 + 0.1 * T + Nx
-        Y = 3.3 * (T-0.5)**2 + 0.3 * T + Ny
-        
-        _, _, _, _, result, _ = causal_inference(X.reshape(-1,1), Y.reshape(-1,1))
-        self.assertEqual(False, result)
-        
-if __name__ == "main":
-    unittest.main() 
+    def test_dataset_5(self):
+        self.check_dataset(4, "X<-T->Y")
+
+    def test_dataset_6(self):
+        self.check_dataset(5, "Y->X")
+
+    def test_dataset_7(self):
+        self.check_dataset(6, "X->Y")
+
+    def test_dataset_8(self):
+        self.check_dataset(7, "X<-T->Y")
+
+    def test_dataset_9(self):
+        self.check_dataset(8, "X->Y")
+
+    def test_dataset_10(self):
+        self.check_dataset(9, "X<-T->Y")
+
+if __name__ == '__main__':
+    unittest.main()

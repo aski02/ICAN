@@ -57,7 +57,7 @@ class Application(tk.Tk):
         frame = ttk.LabelFrame(parent, text="Inputs", padding=(20, 10))
         dataset_frame = ttk.Frame(frame)
         dataset_frame.grid(row=0, column=0, padx=5, sticky="ew")
-        _, self.dataset_combobox = self._create_label_and_combobox(dataset_frame, "Dataset:", [f"Dataset {i}" for i in range(0, 18)], row=0, column=0)
+        _, self.dataset_combobox = self._create_label_and_combobox(dataset_frame, "Dataset:", [f"Dataset {i}" for i in range(0, 20)], row=0, column=0)
         _, self.datapoints_entry = self._create_label_and_entry(dataset_frame, "Datapoints:", row=1, column=0)
         self.datapoints_entry.insert(0, "50")
         _, self.iterations_entry = self._create_label_and_entry(dataset_frame, "Iterations:", row=2, column=0)

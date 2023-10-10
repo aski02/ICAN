@@ -1,8 +1,16 @@
+# -------------------------------------------------------------------------
+# Imports
+# -------------------------------------------------------------------------
+
 import unittest
 from datasets import generate_data
 from ican import causal_inference
 
-class TestComputeAccuracy(unittest.TestCase):
+# -------------------------------------------------------------------------
+# Unittests
+# -------------------------------------------------------------------------
+
+class TestICAN(unittest.TestCase):
     
     def setUp(self):
         self.dim_reduction = "Isomap"

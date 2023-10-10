@@ -73,10 +73,10 @@ def visualize(structures, noises, filename):
     plt.close()
 
 # -------------------------------------------------------------------------
-# Experiments
+# Experiment
 # -------------------------------------------------------------------------
 
-def experiment(generate_data, noises, true_structure, n, filename):
+def experiment(generate_data, noises, true_structure, n, filename, threshold=2.0):
     structures = []
     results = []
     for noise in noises:
@@ -84,7 +84,7 @@ def experiment(generate_data, noises, true_structure, n, filename):
         X = X.reshape(-1, 1)
         Y = Y.reshape(-1, 1)
         
-        T_hat, var, s1_hat, s2_hat, result, structure, p1, p2 = causal_inference(X=X, Y=Y, dim_reduction="Isomap", neighbor_percentage=0.1, iterations=3, kernel="RBF", variance_threshold=2.0, independence_threshold=0.05, regression_method="GPR", independence_method="HSIC", min_distance="Nelder-Mead", min_projection="Nelder-Mead")
+        T_hat, var, s1_hat, s2_hat, result, structure, p1, p2 = causal_inference(X=X, Y=Y, dim_reduction="Isomap", neighbor_percentage=0.1, iterations=3, kernel="RBF", variance_threshold=threshold, independence_threshold=0.05, regression_method="GPR", independence_method="HSIC", min_distance="Nelder-Mead", min_projection="Nelder-Mead")
 
         structures.append(structure)
         correct_count = 1 if structure == true_structure else 0
@@ -102,7 +102,7 @@ def experiment(generate_data, noises, true_structure, n, filename):
     visualize(structures, noises, filename)
 
 # -------------------------------------------------------------------------
-# Running experiments
+# Run Experiments
 # -------------------------------------------------------------------------
 
 experiment(generate_data_6, np.linspace(0.001, 0.05, 100), "X->Y", 20, "noise_6_20")
@@ -116,3 +116,4 @@ experiment(generate_data_13, np.linspace(0.005, 0.05, 100), "X<-T->Y", 60, "nois
 experiment(generate_data_17, np.linspace(0.001, 0.01, 100), "Y->X", 20, "noise_17_20")
 experiment(generate_data_17, np.linspace(0.001, 0.01, 100), "Y->X", 40, "noise_17_40")
 experiment(generate_data_17, np.linspace(0.001, 0.01, 100), "Y->X", 60, "noise_17_60")
+experiment(generate_data_17, np.linspace(0.001, 0.01, 100), "Y->X", 60, "noise_17_60_variance", threshold=1.5)

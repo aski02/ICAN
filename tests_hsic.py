@@ -1,9 +1,17 @@
+# -------------------------------------------------------------------------
+# Imports
+# -------------------------------------------------------------------------
+
 import unittest
 import numpy as np
 import pandas as pd
 from rpy2.robjects import r, pandas2ri
 from rpy2.robjects.packages import importr
 from hsic import hsic_gam
+
+# -------------------------------------------------------------------------
+# Helper functions
+# -------------------------------------------------------------------------
 
 pandas2ri.activate()
 
@@ -51,9 +59,13 @@ def run_r_hsic(X, Y):
         "threshold": result[2][0],
         "p_value": result[3][0]
     }
+    
+# -------------------------------------------------------------------------
+# Unittests
+# -------------------------------------------------------------------------
 
 class TestHSIC(unittest.TestCase):
-    def test_hsic_implementation(self):
+    def test_hsic(self):
         for idx, (X, Y) in enumerate(datasets):
             python_result = run_python_hsic(X, Y)
             r_result = run_r_hsic(X, Y)

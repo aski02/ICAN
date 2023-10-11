@@ -1,6 +1,6 @@
 # ICAN: Identifying confounders using Additive Noise Models
 
-This is the repository for my bachelor thesis. It contains the entire codebase for the implementation, tests and experiments.
+This is the repository for my bachelor thesis. It contains the entire codebase for the implementation, tests and experiments. It implements the algorithm from the paper "Identifying confounders using additive noise models" by Dominik Janzing, Jonas Peters, Joris Mooij and Bernhard Schölkopf (2012).
 
 ## Prerequisites
 

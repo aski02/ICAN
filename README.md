@@ -89,15 +89,15 @@ This project is structured as follows:
   
 - `app.py`: This script contains the graphical user interface.
 
-- `cause_effect_visualization.py`: This script performs a method for causal discovery on nonlinear ANMs on the Old Faithful Geyser dataset and visualize the results.
+- `cause_effect_visualization.py`: This script performs a method for causal discovery on nonlinear ANMs on the Old Faithful Geyser dataset and visualizes the results. The utilized method was described in the paper "Nonlinear causal discovery with additive noise models" by P. Hoyer, D. Janzing, J. M. Mooji, J. Peters and B. Schölkopf (2008).
   
-- `eval.py`: This script evaluates the algorithm and computes the accuracy as well as slightly different score.
+- `eval.py`: This script evaluates a certain parameter combination for the algorithm and computes the accuracy as well as a custom score.
 
 - `experiment_variations.py`: This script creates and visualizes the experiments for comparing different paramter choices. It utilizes `eval.py` to evaluate different combinations.
 
 - `performance_analysis.py`: This script runs the performance analysis.
 
-- `performance_visualization.py`: This script creates visualizes the results of the performance analysis.
+- `performance_visualization.py`: This script visualizes the results of the performance analysis.
 
 - `hsic.py`: This script implements the Hilbert-Schmidt Independence Criterion. The code was sourced from a public GitHub repository: [HSIC](https://github.com/amber0309/HSIC)
 

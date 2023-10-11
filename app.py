@@ -1,3 +1,7 @@
+# -------------------------------------------------------------------------
+# Imports
+# -------------------------------------------------------------------------
+
 import tkinter as tk
 from tkinter import ttk
 import numpy as np
@@ -6,6 +10,10 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from datasets import generate_data
 from ican import causal_inference
 import os
+
+# -------------------------------------------------------------------------
+# GUI
+# -------------------------------------------------------------------------
 
 class Application(tk.Tk):
     def __init__(self):
@@ -39,6 +47,8 @@ class Application(tk.Tk):
         scrollbar.grid(row=0, column=1, sticky="ns")
         self.canvas.configure(yscrollcommand=scrollbar.set)
 
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+
         main_frame = ttk.Frame(self.canvas, padding="20")
         self.canvas.create_window((0, 0), window=main_frame, anchor="nw")
         main_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
@@ -51,6 +61,10 @@ class Application(tk.Tk):
 
         self.plot_frame = ttk.LabelFrame(main_frame, text="Plots", padding="10")
         self.plot_frame.grid(row=5, sticky="ew")
+
+
+    def _on_mousewheel(self, event):
+        self.canvas.yview_scroll(-1*event.delta, "units")
 
 
     def _create_input_frame(self, parent):
@@ -132,17 +146,14 @@ class Application(tk.Tk):
         frame = ttk.LabelFrame(parent, text="Outputs", padding=(20, 10))
         frame.grid(row=1, sticky="ew")
 
-        # Variance quotient Output
         self._create_output_label_pair(frame, "Variance quotient:", row=0)
         _, self.var_output_value = self._create_output_label_pair(frame, "Var(Nx) / Var(Ny)", row=0)
 
-        # P-values Output
         self._create_output_label_pair(frame, "p-value for X->Y:", row=1)
         _, self.p1_output_value = self._create_output_label_pair(frame, "p-value for X->Y:", row=1)
         self._create_output_label_pair(frame, "p-value for Y->X:", row=2)
         _, self.p2_output_value = self._create_output_label_pair(frame, "p-value for Y->X:", row=2)
 
-        # Structure Output
         self._create_output_label_pair(frame, "Structure:", row=3)
         _, self.structure_output_value = self._create_output_label_pair(frame, "Structure:", row=3)
 
@@ -206,7 +217,6 @@ class Application(tk.Tk):
         def save_plot(func, title, filename, xlabel="", ylabel=""):
             fig, ax = plt.subplots()
             func(ax)
-            #ax.set_title(title)
             ax.set_xlabel(xlabel)
             ax.set_ylabel(ylabel)
             fig.tight_layout()
@@ -233,7 +243,6 @@ class Application(tk.Tk):
         save_plot(lambda ax: ax.scatter(T_hat, Ny, edgecolors="b", facecolors="none", s=30, linewidth=0.5), 
                 "Estimated T vs Estimated Ny", "T_vs_Ny.png", "Estimated T", "Estimated Ny")
         
-        # Now, display the original combined plot in the GUI
         fig, axs = plt.subplots(3, 2, figsize=(10, 10))
         axs[0, 0].scatter(X, Y, edgecolors="b", facecolors="none", s=30, linewidth=0.5)
         axs[0, 0].set_title("X vs Y")

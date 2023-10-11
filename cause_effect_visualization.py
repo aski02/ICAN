@@ -65,5 +65,5 @@ T, X, Y = generate_data(250, 3)
 X, Y = X.reshape(-1,1), Y.reshape(-1,1)
 
 result1, p1 = check_model(X=X, Y=Y, threshold=0.05, xlabel="duration", ylabel="interval", filename_fit='forward_fit.png', filename_residuals='forward_residuals.png')
-result2, p2 = check_model(X=Y, Y=X, threshold=0.05, xlabel="interval", ylabel="duration", filename_fit='backward_fit.png', filename_residuals='backward_residuals .png')
+result2, p2 = check_model(X=Y, Y=X, threshold=0.05, xlabel="interval", ylabel="duration", filename_fit='backward_fit.png', filename_residuals='backward_residuals.png')
 print(p1, p2)

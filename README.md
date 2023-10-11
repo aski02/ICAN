@@ -6,7 +6,7 @@ This is the repository for my bachelor thesis. It contains the entire codebase f
 
 - **Python**: Version 3.10 or higher. Make sure that Python is compiled with support for Tkinter and SQLite, as these are required for `app.py` and `tests_hsic.py`, respectively. Typically, these are already included when installing Python.
 - **pipenv**: Required for managing project dependencies.
-- **R**: Only required for the Hilbert-Schmidt Independence Criterion unittest (tests_hsic.py). Make sure to install the "dHSIC" library via a R console session:
+- **R**: Only required for the Hilbert-Schmidt Independence Criterion unittest (`tests_hsic.py`). Make sure to install the "dHSIC" library via a R console session:
   ```
   install.packages("dHSIC")
   ```

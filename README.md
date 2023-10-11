@@ -85,7 +85,7 @@ This project is structured as follows:
 
 - `datasets/`: This directory contains the raw data for the real-world datasets.
 
-- `datasets.py`: All the datasets (both simulated an real-world) are accessible via this script.
+- `datasets.py`: All the datasets (both simulated and real-world) are accessible via this script.
   
 - `app.py`: This script contains the graphical user interface.
 

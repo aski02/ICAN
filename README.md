@@ -25,8 +25,8 @@ This is the repository for my bachelor thesis. It contains the entire codebase f
 
 3. **Start the pipenv shell** and install the dependencies:
    ```
-   pipenv shell
    pipenv install
+   pipenv shell
    ```
 
 ## Running the Application

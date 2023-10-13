@@ -28,6 +28,8 @@ This is the repository for my bachelor thesis. It contains the entire codebase f
    pipenv install
    pipenv shell
    ```
+   
+3. **As an alternative to pipenv**, you can manually install the following packages: `numpy`, `pandas`, `scipy`, `matplotlib`, `seaborn`, `xgboost`, `scikit-learn` and `rpy2`.
 
 ## Running the Application
 
